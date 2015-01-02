@@ -11,7 +11,7 @@
 static int matInit(void)
 {
     int ret = 0;
-    LOGI("MatDrv, version " MATDRV_VERSION);
+    LOGI("MatDrv, version %s", MATDRV_VERSION);
 
     if ((ret = matDevCreate()) < 0)
     {

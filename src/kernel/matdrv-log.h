@@ -9,30 +9,22 @@
 
 #include "matdrv-common.h"
 
-// TODO: LOGD should show up only when driver is compiled in DEBUG
-#define LOGD(msg)                                                                   \
-    do {                                                                            \
-        printk(KERN_DEBUG "MATDRV [DBG] %s@%d: %s\n", __func__, __LINE__, msg);     \
+#define LOG(kern_level, level, format, ...)                             \
+    do {                                                                \
+        printk(kern_level "MatDrv [" #level "] %s@%d: " format "\n",    \
+               __func__, __LINE__, ##__VA_ARGS__);                      \
     } while(0)
 
+// TODO: LOGD should show up only when driver is compiled in DEBUG
+#ifdef DEBUG
+#define LOGD(fmt, ...) LOG(KERN_DEBUG, DBG, fmt, ##__VA_ARGS__)
+#else
+#define LOGD(fmt, ...) do { } while(0)
+#endif
+
 // macros independent from build compilation
-
-// INFO LOG
-#define LOGI(msg)                                                                   \
-    do {                                                                            \
-        printk(KERN_INFO "MATDRV [INF] %s@%d: %s\n", __func__, __LINE__, msg);      \
-    } while (0)
-
-// WARNING LOG
-#define LOGW(msg)                                                                   \
-    do {                                                                            \
-        printk(KERN_WARNING "MATDRV [WRN] %s@%d: %s\n", __func__, __LINE__, msg);   \
-    } while (0)
-
-// ERROR LOG
-#define LOGE(msg)                                                                   \
-    do {                                                                            \
-        printk(KERN_ERR "MATDRV [ERR] %s@%d: %s\n", __func__, __LINE__, msg);       \
-    } while (0)
+#define LOGI(fmt, ...) LOG(KERN_INFO, INF, fmt, ##__VA_ARGS__)
+#define LOGW(fmt, ...) LOG(KERN_WARNING, WRN, fmt, ##__VA_ARGS__)
+#define LOGE(fmt, ...) LOG(KERN_ERR, ERR, fmt, ##__VA_ARGS__)
 
 #endif // _MATDRV_LOG_H_
