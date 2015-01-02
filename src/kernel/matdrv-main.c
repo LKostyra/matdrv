@@ -1,27 +1,41 @@
 /**
- * @file   matdrv.c
+ * @file   matdrv-main.c
  * @author LKostyra (costyrra.xl@gmail.com)
  * @brief  Main entry point for MatDrv
  */
 
 #include "matdrv-log.h"
 #include "matdrv-version.h"
+#include "matdrv-devmanager.h"
 
-static int matdrv_init(void)
+static int matInit(void)
 {
+    int ret = 0;
     LOGI("MatDrv, version " MATDRV_VERSION);
 
+    if ((ret = matDevCreate()) < 0)
+    {
+        LOGE("Failed to craete dev node.");
+        goto exit;
+    }
+
     LOGI("Initialized successfully.");
-    return 0;
+
+exit:
+    return ret;
 }
 
-static void matdrv_exit(void)
+static void matExit(void)
 {
+    LOGI("Shutting down driver.");
+
+    matDevRelease();
+
     LOGI("Shutdown successful.");
 }
 
-module_init(matdrv_init);
-module_exit(matdrv_exit);
+module_init(matInit);
+module_exit(matExit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("LKostyra <costyrra.xl@gmail.com>");

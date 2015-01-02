@@ -7,6 +7,7 @@ KERNELDIR := /lib/modules/$(KERNELVERSION)/build
 PWD := $(shell pwd)
 
 obj-m += matdrv.o
+matdrv-objs := matdrv-main.o matdrv-devmanager.o
 
 default: build
 
