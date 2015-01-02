@@ -1,0 +1,12 @@
+# @file   .gitignore
+# @author LKostyra (costyrra.xl@gmail.com
+# @brief  Git ignored files
+
+# Compilation results
+/bin
+*.o*
+*.ko*
+*.mod*
+modules.order
+Module.symvers
+.tmp_versions

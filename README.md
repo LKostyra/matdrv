@@ -1,6 +1,13 @@
-MatDrv Project
-==============
+MatDrv Project v 0.0.0
+======================
 
-Driver for delegating matrix calculations.
+Driver for delegating matrix calculations to external devices.
 
-Driver under development, README will be filled soon...
+Driver is under development, so right now it is recommended not to use it.
+
+Directory structure
+-------------------
+
+* **src** - MatDrv source files
+    * **kernel** - kernelspace part of MatDrv
+* **util** - MatDrv utility scripts
