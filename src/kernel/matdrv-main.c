@@ -13,15 +13,15 @@ static int matInit(void)
     int ret = 0;
     LOGI("MatDrv, version %s", MATDRV_VERSION);
 
-    if ((ret = matDevCreate()) < 0)
+    if ((ret = matDevCreate()) != 0)
     {
         LOGE("Failed to craete dev node.");
-        goto exit;
+        goto out;
     }
 
     LOGI("Initialized successfully.");
 
-exit:
+out:
     return ret;
 }
 
@@ -29,7 +29,7 @@ static void matExit(void)
 {
     LOGI("Shutting down driver.");
 
-    matDevRelease();
+    matDevCleanup();
 
     LOGI("Shutdown successful.");
 }

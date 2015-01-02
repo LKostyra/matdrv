@@ -15,6 +15,6 @@
 extern struct cdev* gMatDevCdev;
 
 int matDevCreate(void);
-void matDevRelease(void);
+void matDevCleanup(void);
 
 #endif

@@ -15,7 +15,6 @@
                __func__, __LINE__, ##__VA_ARGS__);                      \
     } while(0)
 
-// TODO: LOGD should show up only when driver is compiled in DEBUG
 #ifdef DEBUG
 #define LOGD(fmt, ...) LOG(KERN_DEBUG, DBG, fmt, ##__VA_ARGS__)
 #else
