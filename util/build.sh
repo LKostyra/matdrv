@@ -27,9 +27,16 @@ ssh -p 3022 root@localhost 'mkdir -p ~/matdrv_build'
 echo "Copying sources to VM"
 scp -P 3022 -r src root@localhost:matdrv_build/
 scp -P 3022 Makefile root@localhost:matdrv_build/
+scp -P 3022 70-matdrv.conf root@localhost:matdrv_build/
 
 # run make
 echo "Building project on VM"
 ssh -p 3022 root@localhost 'cd ~/matdrv_build/ && make'
+
+echo "Installing"
+ssh -p 3022 root@localhost 'cd ~/matdrv_build/ && make install'
+
+echo "Reloading udev"
+ssh -p 3022 root@localhost 'udevadm control --reload-rules'
 
 popd > /dev/null

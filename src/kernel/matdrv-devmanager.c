@@ -9,46 +9,99 @@
 
 #include <linux/types.h>
 #include <linux/fs.h>
+#include <asm/uaccess.h> // used with copy from/to user
 
 #define MATDRV_DEV_CLASS_NAME "matdrv_class"
 #define MATDRV_DEV_MINOR_COUNT 1
+#define MATDRV_BUFFER_LENGTH 256
 
 struct cdev* gMatDevCdev = NULL;
 
 dev_t matDev = 0;
 static struct class* matDevClass = NULL;
+char matBuffer[MATDRV_BUFFER_LENGTH];
 
 ssize_t matDevWrite(struct file* filp, const char __user *buf, size_t count, loff_t* off)
 {
-    return 0;
+    unsigned long ret;
+
+    LOGI("Writing data.");
+
+    if ( *off + count >= MATDRV_BUFFER_LENGTH)
+    {
+        count = MATDRV_BUFFER_LENGTH - *off;
+    }
+
+    if (count == 0)
+    {
+        return -ENOSPC;
+    }
+
+    ret = copy_from_user(&matBuffer[*off], buf, count);
+    if (ret)
+    {
+        LOGE("Failed to copy data from user: %lu", ret);
+        return ret;
+    }
+
+    *off += count;
+
+    LOGI("Copied buffer successfully from user");
+    return count;
 }
 
 ssize_t matDevRead(struct file* filp, char __user *buf, size_t count, loff_t* off)
 {
-    return 0;
+    unsigned long ret;
+
+    LOGI("Reading data.");
+
+    if ( *off + count >= MATDRV_BUFFER_LENGTH)
+    {
+        count = MATDRV_BUFFER_LENGTH - *off;
+    }
+
+    if (count == 0)
+    {
+        return 0;
+    }
+
+    ret = copy_to_user(buf, &matBuffer[*off], count);
+    if (ret)
+    {
+        LOGE("Failed to copy data from user: %lu", ret);
+        return ret;
+    }
+
+    *off += count;
+    LOGI("Successfully returned data to user.");
+    return count;
 }
 
 static int matDevOpen(struct inode* inode, struct file* file)
 {
+    LOGI("Opening device.");
     return 0;
 }
 
 static int matDevRelease(struct inode* inode, struct file* file)
 {
+    LOGI("Releasing device.");
     return 0;
 }
+
+struct file_operations fops =
+{
+    .owner = THIS_MODULE,
+    .read = matDevRead,
+    .write = matDevWrite,
+    .open = matDevOpen,
+    .release = matDevRelease
+};
 
 int matDevCreate(void)
 {
     int ret = 0;
-    struct file_operations fops =
-    {
-        .owner = THIS_MODULE,
-        .read = matDevRead,
-        .write = matDevWrite,
-        .open = matDevOpen,
-        .release = matDevRelease
-    };
 
     LOGI("Registering char device in system.");
 
@@ -85,7 +138,7 @@ int matDevCreate(void)
         goto out;
     }
 
-    device_create(matDevClass, NULL, matDev, NULL, MATDRV_DEV_NAME "%d", MINOR(matDev));
+    device_create(matDevClass, NULL, matDev, NULL, MATDRV_DEV_NAME);
     LOGI("Allocated %s device number %d:%d", MATDRV_DEV_NAME, MAJOR(matDev), MINOR(matDev));
 
     ret = 0;

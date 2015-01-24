@@ -14,6 +14,7 @@ default:
 
 install:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@; done
+	install -m 644 70-matdrv.conf /etc/udev/rules.d/
 
 clean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@; done
