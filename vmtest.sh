@@ -30,15 +30,13 @@ $SSH 'rmmod matdrv'
 echo "Printing dmesg"
 $SSH 'dmesg'
 
-echo "==== ECHO TEST ===="
+echo "==== MODULE TESTS ===="
 echo "Clearing dmesg"
 $SSH 'dmesg -C'
 echo "Inserting module"
 $SSH 'insmod matdrv_build/bin/matdrv.ko'
-echo "Sending info"
-$SSH 'echo TestText > /dev/matdrv'
-echo "Receiving text:"
-$SSH 'cat /dev/matdrv'
+echo "Running gtest"
+$SSH 'cd matdrv_build/src/tests; ./matdrv-tests'
 echo "Removing module"
 $SSH 'rmmod matdrv'
 echo "Printing dmesg"

@@ -41,6 +41,8 @@ echo "    Kernel module"
 $SSH 'cd ~/matdrv_build/ && make'
 echo "    gtest"
 $SSH 'cd ~/matdrv_build/gtest && cmake . && make'
+echo "    Module tests"
+$SSH 'cd ~/matdrv_build/src/tests && cmake . && make'
 
 echo "Installing"
 $SSH 'cd ~/matdrv_build/ && make install'
