@@ -1,0 +1,14 @@
+# @file   CMakeLists.txt
+# @author LKostyra (costyrra.xl@gmail.com)
+# @brief  CMake for gtest
+
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
+
+FILE(GLOB_RECURSE GTEST_SOURCES *.cc)
+FILE(GLOB_RECURSE GTEST_HEADERS *.h)
+
+SET(GTEST_VERSION 1.7.0)
+
+INCLUDE_DIRECTORIES(include)
+
+ADD_LIBRARY(gtest ${GTEST_SOURCES} ${GTEST_HEADERS})
