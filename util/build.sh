@@ -26,26 +26,29 @@ echo -n "Current directory is "; pwd
 echo "Creating build directory in VM"
 $SSH 'mkdir -p ~/matdrv_build'
 
-echo "Copying sources to VM:"
-echo "    Project sources"
-scp -P 3022 -r src root@localhost:matdrv_build/
-echo "    gtest"
-scp -P 3022 -r gtest root@localhost:matdrv_build/
-echo "    Additional data"
-scp -P 3022 Makefile root@localhost:matdrv_build/
-scp -P 3022 70-matdrv.conf root@localhost:matdrv_build/
+if ssh -p 3022 root@localhost '[ ! -d "matdrv" ]'; then
+    echo "Copying sources to VM:"
+    echo "Repo root dir is $(pwd)"
+    CLONE_CMD="git clone lkostyra@10.0.2.2:$(pwd)"
+    $SSH $CLONE_CMD
+fi
+
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+echo "Current branch is ${BRANCH_NAME} - resetting to there"
+RESET_CMD="cd ~/matdrv; git fetch origin -p; git reset --hard origin/${BRANCH_NAME}"
+$SSH $RESET_CMD
 
 # run make
 echo "Building project on VM:"
 echo "    Kernel module"
-$SSH 'cd ~/matdrv_build/ && make'
+$SSH 'cd ~/matdrv/ && make'
 echo "    gtest"
-$SSH 'cd ~/matdrv_build/gtest && cmake . && make'
+$SSH 'cd ~/matdrv/gtest && cmake . && make'
 echo "    Module tests"
-$SSH 'cd ~/matdrv_build/src/tests && cmake . && make'
+$SSH 'cd ~/matdrv/src/tests && cmake . && make'
 
 echo "Installing"
-$SSH 'cd ~/matdrv_build/ && make install'
+$SSH 'cd ~/matdrv/ && make install'
 
 echo "Reloading udev"
 $SSH 'udevadm control --reload-rules'
