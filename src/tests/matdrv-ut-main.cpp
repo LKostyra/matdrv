@@ -1,5 +1,6 @@
+#include "matdrv-ut-common.hpp"
+
 #include <iostream>
-#include <gtest/gtest.h>
 
 int main(int argc, char* argv[])
 {

@@ -1,36 +1,35 @@
-#include <gtest/gtest.h>
+#include "matdrv-ut-common.hpp"
+
 #include <fcntl.h>
 #include <unistd.h>
 
-const char* TEST_MESSAGE_SHORT = "Some test message";
+#include <iostream>
 
 class BasicTest: public ::testing::Test
 {
-public:
-    int devFD;
 };
 
 // basic open and close device test
 TEST_F(BasicTest, OpenCloseDevice)
 {
-    devFD = open("/dev/matdrv", O_RDWR | O_NONBLOCK);
-    ASSERT_GT(devFD, -1);
-
-    devFD = close(devFD);
-    ASSERT_GT(devFD, -1);
+    FDPtr devFD(new int, FDPtrDelete);
+    *devFD = open(MATDRV_DEVICE_PATH.c_str(), O_RDWR | O_NONBLOCK);
+    ASSERT_GT(*devFD, -1);
+    // close() will be called by std::unique_ptr deleter
 }
 
+// write some example test to device, then try to read it
 TEST_F(BasicTest, WriteRead)
 {
-    devFD = open("/dev/matdrv", O_RDWR | O_NONBLOCK);
-    ASSERT_GT(devFD, -1);
+    FDPtr devFD(new int, FDPtrDelete);
+    *devFD = open(MATDRV_DEVICE_PATH.c_str(), O_RDWR | O_NONBLOCK);
+    ASSERT_GT(*devFD, -1);
+    ASSERT_EQ(write(*devFD, TEST_MESSAGE_SHORT.c_str(), TEST_MESSAGE_SHORT.size()),
+              TEST_MESSAGE_SHORT.size());
 
-    int msgLen = strlen(TEST_MESSAGE_SHORT);
-    ASSERT_EQ(write(devFD, TEST_MESSAGE_SHORT, msgLen), msgLen);
-
-    const char* buf[256];
-    ASSERT_EQ(read(devFD, buf, msgLen), msgLen);
-
-    devFD = close(devFD);
-    ASSERT_GT(devFD, -1);
+    char buf[256];
+    ASSERT_EQ(read(*devFD, buf, TEST_MESSAGE_SHORT.size()),
+              TEST_MESSAGE_SHORT.size());
+    std::cout << "TEST: " << TEST_MESSAGE_SHORT.c_str() << ", buf: " << buf << std::endl;
+    ASSERT_EQ(strncmp(TEST_MESSAGE_SHORT.c_str(), buf, TEST_MESSAGE_SHORT.size()), 0);
 }
