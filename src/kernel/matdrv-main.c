@@ -7,15 +7,28 @@
 #include "matdrv-log.h"
 #include "matdrv-version.h"
 #include "matdrv-devmanager.h"
+#include "matdrv-backend.h"
+#include "matdrv-backend-software.h"
 
 static int matInit(void)
 {
     int ret = 0;
     LOGI("MatDrv, version %s", MATDRV_VERSION);
 
+    // add backends - software
+    // this one must success, otherwise our driver is useless
+    if ((ret = matSoftwareAddBackend()) != 0)
+    {
+        LOGE("Failed to provide software backend! Error: %d", ret);
+        goto out;
+    }
+
+    // add other backends
+    // these might fail - just inform the user about failure and continue with initialization
+
     if ((ret = matDevCreate()) != 0)
     {
-        LOGE("Failed to craete dev node.");
+        LOGE("Failed to craete dev node. Error: %d", ret);
         goto out;
     }
 
@@ -29,7 +42,11 @@ static void matExit(void)
 {
     LOGI("Shutting down driver.");
 
+    // clean device node
     matDevCleanup();
+
+    // clean backends
+    matBackendCleanup();
 
     LOGI("Shutdown successful.");
 }
