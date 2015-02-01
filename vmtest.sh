@@ -12,7 +12,7 @@ echo "==== INSERT/REMOVE TEST ===="
 echo "Clearing dmesg"
 $SSH 'dmesg -C'
 echo "Inserting module"
-$SSH 'insmod matdrv_build/bin/matdrv.ko'
+$SSH 'insmod matdrv/bin/matdrv.ko'
 echo "lsmod info:"
 $SSH 'lsmod | grep matdrv'
 echo -n "Checking if matdrv device is present... "
@@ -34,9 +34,9 @@ echo "==== MODULE TESTS ===="
 echo "Clearing dmesg"
 $SSH 'dmesg -C'
 echo "Inserting module"
-$SSH 'insmod matdrv_build/bin/matdrv.ko'
+$SSH 'insmod matdrv/bin/matdrv.ko'
 echo "Running gtest"
-$SSH 'cd matdrv_build/src/tests; ./matdrv-tests'
+$SSH 'cd matdrv/src/tests; ./matdrv-tests'
 echo "Removing module"
 $SSH 'rmmod matdrv'
 echo "Printing dmesg"
