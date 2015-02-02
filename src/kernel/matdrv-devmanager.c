@@ -5,11 +5,11 @@
  */
 
 #include "matdrv-devmanager.h"
+#include "matdrv-backend.h"
 #include "matdrv-log.h"
 
 #include <linux/types.h>
 #include <linux/fs.h>
-#include <asm/uaccess.h> // used with copy from/to user
 
 #define MATDRV_DEV_CLASS_NAME "matdrv_class"
 #define MATDRV_DEV_MINOR_COUNT 1
@@ -41,13 +41,60 @@ static int matDevRelease(struct inode* inode, struct file* file)
     return 0;
 }
 
+long matDevIoctl(struct file* filp, unsigned int cmd, unsigned long arg)
+{
+    long ret;
+    matdrv_matrix_t mat;
+
+    switch (cmd)
+    {
+    case MATDRV_IOCTL_SET_OP:
+        if (arg < (unsigned long)MATOP_COUNT)
+        {
+            return matSetOp((enum matOps)arg);
+        }
+        else
+        {
+            return -ENOENT;
+        }
+
+    case MATDRV_IOCTL_SEND_MATRIX:
+        ret = copy_from_user(&mat, (matdrv_matrix_t*)arg, sizeof(matdrv_matrix_t));
+        if (ret)
+        {
+            LOGE("Failed to copy matrix from user: %ld", ret);
+            return ret;
+        }
+        return matSendMatrix(&mat);
+
+    case MATDRV_IOCTL_GET_RESULT:
+        ret = matGetResultMatrix(&mat);
+        if (ret)
+        {
+            LOGE("Failed to get result matrix: %ld", ret);
+            return ret;
+        }
+        ret = copy_to_user((matdrv_matrix_t*)arg, &mat, sizeof(matdrv_matrix_t));
+        if (ret)
+        {
+            LOGE("Failed to copy matrix to user: %ld", ret);
+            return ret;
+        }
+        return 0;
+
+    default:
+        return -ENOTTY;
+    }
+}
+
 struct file_operations fops =
 {
     .owner = THIS_MODULE,
     .read = matDevRead,
     .write = matDevWrite,
     .open = matDevOpen,
-    .release = matDevRelease
+    .release = matDevRelease,
+    .unlocked_ioctl = matDevIoctl,
 };
 
 int matDevCreate(void)

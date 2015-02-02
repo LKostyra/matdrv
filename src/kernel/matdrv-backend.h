@@ -38,7 +38,7 @@ struct matBackendFunc
      *
      * @param op Operation to perform by the device.
      */
-    void (*setOp)(enum matOps op);
+    int (*setOp)(enum matOps op);
 
     /**
      * Sends matrix to driver.
@@ -46,7 +46,7 @@ struct matBackendFunc
      * The device by default keeps two matrices in memory. After this call, older one is replaced by
      * the one provided as a param to this function.
      */
-void (*sendMatrix)(int* mat);
+    int (*sendMatrix)(matdrv_matrix_t* mat);
 
     /**
      * Get result of calculation
@@ -56,7 +56,7 @@ void (*sendMatrix)(int* mat);
      *
      * It is caller's duty to allocate space required for result matrix.
      */
-    void (*getResultMatrix)(int* mat);
+    int (*getResultMatrix)(matdrv_matrix_t* mat);
 };
 
 extern struct matBackendFunc** gBackends;
@@ -90,8 +90,8 @@ void matBackendCleanup(void);
 
 // Regular functions visible for the rest of the driver.
 // During backends init, driver checks which device is available and chooses appropriate one.
-void matSetOp(enum matOps op);
-void matSendMatrix(int* mat);
-void matGetResultMatrix(int* mat);
+int matSetOp(enum matOps op);
+int matSendMatrix(matdrv_matrix_t* mat);
+int matGetResultMatrix(matdrv_matrix_t* mat);
 
 #endif // _MATDRV_BACKEND_H_

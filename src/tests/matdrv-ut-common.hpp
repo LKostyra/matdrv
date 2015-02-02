@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <linux/matdrv.h>
+
 #include <memory>
 #include <string>
 
