@@ -18,8 +18,8 @@
 /**
  * Adds this backend to MatDrv backend pool.
  *
- * @return result of matBackendAdd. See for more details.
+ * @return result of matBackendAdd. See matBackendAdd for more details.
  */
-int matSoftwareAddBackend(void);
+long matSoftwareAddBackend(void);
 
 #endif // _MATDRV_BACKEND_SOFTWARE_H_

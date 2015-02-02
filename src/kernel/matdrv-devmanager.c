@@ -68,16 +68,17 @@ long matDevIoctl(struct file* filp, unsigned int cmd, unsigned long arg)
         return matSendMatrix(&mat);
 
     case MATDRV_IOCTL_GET_RESULT:
+        // get from user space where we will copy result data
+        ret = copy_from_user(&mat, (matdrv_matrix_t*)arg, sizeof(matdrv_matrix_t));
+        if (ret)
+        {
+            LOGE("Failed to copy matrix from user: %ld", ret);
+            return ret;
+        }
         ret = matGetResultMatrix(&mat);
         if (ret)
         {
             LOGE("Failed to get result matrix: %ld", ret);
-            return ret;
-        }
-        ret = copy_to_user((matdrv_matrix_t*)arg, &mat, sizeof(matdrv_matrix_t));
-        if (ret)
-        {
-            LOGE("Failed to copy matrix to user: %ld", ret);
             return ret;
         }
         return 0;

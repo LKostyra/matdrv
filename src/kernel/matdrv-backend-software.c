@@ -3,11 +3,11 @@
 #include "matdrv-log.h"
 
 // prototypes
-int matSoftwareInit(void);
+long matSoftwareInit(void);
 void matSoftwareRelease(void);
-int matSoftwareSetOp(enum matOps op);
-int matSoftwareSendMatrix(matdrv_matrix_t* mat);
-int matSoftwareGetResultMatrix(matdrv_matrix_t* mat);
+long matSoftwareSetOp(enum matOps op);
+long matSoftwareSendMatrix(matdrv_matrix_t* mat);
+long matSoftwareGetResultMatrix(matdrv_matrix_t* mat);
 
 // backend struct
 struct matBackendFunc matSoftwareBackend =
@@ -21,7 +21,7 @@ struct matBackendFunc matSoftwareBackend =
 
 // globally visible function - adds current backend to pool
 // should be caled by init function of this module
-int matSoftwareAddBackend(void)
+long matSoftwareAddBackend(void)
 {
     return matBackendAdd(&matSoftwareBackend);
 }
@@ -35,8 +35,12 @@ matdrv_matrix_t matrix[2];
 matdrv_matrix_t result;
 
 // Init and Release do not need to perform any job in this backend. Below functions are just stubs.
-int matSoftwareInit(void)
+long matSoftwareInit(void)
 {
+    matrix[0].matrix = NULL;
+    matrix[1].matrix = NULL;
+    result.matrix = NULL;
+
     LOGI("Software backend for MatDrv - initialized successfully");
     return 0;
 }
@@ -51,14 +55,14 @@ void matSoftwareRelease(void)
     LOGI("Software backend for MatDrv - freed successfully");
 }
 
-int matSoftwareSetOp(enum matOps op)
+long matSoftwareSetOp(enum matOps op)
 {
     LOGI("Setting operation %d", (int)op);
     selectedOp = op;
     return 0;
 }
 
-int matSoftwareSendMatrix(matdrv_matrix_t* mat)
+long matSoftwareSendMatrix(matdrv_matrix_t* mat)
 {
     int i = 0;
     long ret;
@@ -80,10 +84,10 @@ int matSoftwareSendMatrix(matdrv_matrix_t* mat)
     }
 
     LOGI("Recevied %dx%d matrix", matrix[olderMat].sizex, matrix[olderMat].sizey);
-    LOGI("Elements:");
+    LOGD("Elements:");
     for (i=0; i<matrix[olderMat].sizex*matrix[olderMat].sizey; ++i)
     {
-        LOGI("Element %d = %d", i, matrix[olderMat].matrix[i]);
+        LOGD("Element %d = %d", i, matrix[olderMat].matrix[i]);
     }
 
     olderMat++;
@@ -95,10 +99,153 @@ int matSoftwareSendMatrix(matdrv_matrix_t* mat)
     return 0;
 }
 
-int matSoftwareGetResultMatrix(matdrv_matrix_t* mat)
+/**
+ * Calculate result matrix dimensions.
+ *
+ * Function might return an error if matrix sizes are not compatible according to standard algebra
+ * calculation rules.
+ *
+ * @return 0 on success, -EINVAL if matrix sizes are incorrect.
+ */
+inline long matSoftwareCalculateMatrixDim(void)
 {
-    // TODO calculate matrix
+    if (selectedOp == MATOP_ADD || selectedOp == MATOP_SUBTRACT)
+    {
+        if (matrix[0].sizex != matrix[1].sizex)
+        {
+            LOGE("X size mismatch (%d vs %d).",
+                 matrix[0].sizex, matrix[1].sizex);
+            return -EINVAL;
+        }
+        else
+        {
+            // matrix sizes are equal - assume one of them as result
+            result.sizex = matrix[0].sizex;
+        }
 
-    // TODO copy result to user
+        if (matrix[0].sizey != matrix[1].sizey)
+        {
+            LOGE("Y size mismatch (%d vs %d).", matrix[0].sizey, matrix[1].sizey);
+            return -EINVAL;
+        }
+        else
+        {
+            // matrix sizes are equal - assume one of them as result
+            result.sizey = matrix[0].sizey;
+        }
+
+        return 0;
+    }
+    else if (selectedOp == MATOP_MULTIPLY)
+    {
+        // as for multipliaction process, we cannot simply assume that we will replace empty
+        // elements with 0. Assume that result matrix must be correct size, return error if it isn't
+
+        // TODO fill multiplication
+    }
+
+    return 0;
+}
+
+long matSoftwareAdd(void)
+{
+    unsigned int i;
+
+    result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
+    if (!result.matrix)
+    {
+        LOGE("Failed to allocate memory for result matrix!");
+        return -ENOMEM;
+    }
+
+    for (i=0; i<result.sizex*result.sizey; ++i)
+    {
+        // calculation
+        result.matrix[i] = matrix[0].matrix[i] + matrix[1].matrix[i];
+    }
+
+    // result matrix calculated successfully, return to GetResultMatrix
+    return 0;
+}
+
+long matSoftwareSubtract(void)
+{
+    unsigned int i;
+
+    result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
+    if (!result.matrix)
+    {
+        LOGE("Failed to allocate memory for result matrix!");
+        return -ENOMEM;
+    }
+
+    for (i=0; i<result.sizex*result.sizey; ++i)
+    {
+        // calculation
+        result.matrix[i] = matrix[0].matrix[i] - matrix[1].matrix[i];
+    }
+
+    // result matrix calculated successfully, return to GetResultMatrix
+    return 0;
+}
+
+long matSoftwareMultiply(void)
+{
+    return 0;
+}
+
+long matSoftwareGetResultMatrix(matdrv_matrix_t* mat)
+{
+    long ret;
+
+    ret = matSoftwareCalculateMatrixDim();
+    if (ret)
+    {
+        LOGE("Failed to calculate result matrix dimensions!");
+        return ret;
+    }
+
+    // check if user provided correct matrix with enough space
+    // we must assume, that sizex*sizey is indeed size of users matrix
+    // other situations are probably bad programming from user's side
+    LOGI("Received result matrix %dx%d", mat->sizex, mat->sizey);
+    if (mat->sizex != result.sizex || mat->sizey != result.sizey)
+    {
+        LOGE("Incorrect result matrix provided!");
+        return -EINVAL;
+    }
+
+    switch (selectedOp)
+    {
+    case MATOP_NONE: // just exit, there is not much we can do
+        LOGW("Asked to perform no operation. Was this intentional?");
+        return 0;
+    case MATOP_ADD:
+        ret = matSoftwareAdd();
+        break;
+    case MATOP_SUBTRACT:
+        ret = matSoftwareSubtract();
+        break;
+    case MATOP_MULTIPLY:
+        ret = matSoftwareMultiply();
+        break;
+    default: // theoretically this should not be reached, but just in case...
+        LOGE("Incorrect operation selected!");
+        return -ENOENT;
+    };
+    if (ret)
+    {
+        LOGE("Failed to calculate matrix: %ld", ret);
+        return ret;
+    }
+
+    // copy data to user
+    ret = copy_to_user(mat->matrix, result.matrix, sizeof(int)*mat->sizex*mat->sizey);
+    if (ret)
+    {
+        LOGE("Failed to copy result to user.");
+        return ret;
+    }
+
     return 0;
 }

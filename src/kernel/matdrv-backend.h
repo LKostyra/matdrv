@@ -26,7 +26,7 @@ struct matBackendFunc
      *
      * @return 0 when backend is inintailzed successfully.
      */
-    int (*init)(void);
+    long (*init)(void);
 
     /**
      * Cleans after the backend
@@ -38,7 +38,7 @@ struct matBackendFunc
      *
      * @param op Operation to perform by the device.
      */
-    int (*setOp)(enum matOps op);
+    long (*setOp)(enum matOps op);
 
     /**
      * Sends matrix to driver.
@@ -46,7 +46,7 @@ struct matBackendFunc
      * The device by default keeps two matrices in memory. After this call, older one is replaced by
      * the one provided as a param to this function.
      */
-    int (*sendMatrix)(matdrv_matrix_t* mat);
+    long (*sendMatrix)(matdrv_matrix_t* mat);
 
     /**
      * Get result of calculation
@@ -56,7 +56,7 @@ struct matBackendFunc
      *
      * It is caller's duty to allocate space required for result matrix.
      */
-    int (*getResultMatrix)(matdrv_matrix_t* mat);
+    long (*getResultMatrix)(matdrv_matrix_t* mat);
 };
 
 extern struct matBackendFunc** gBackends;
@@ -69,14 +69,14 @@ extern struct matBackendFunc** gBackends;
  *
  * @return 0 on success, -ENODEV if backend cannot be initialized.
  */
-int matBackendAdd(struct matBackendFunc* backend);
+long matBackendAdd(struct matBackendFunc* backend);
 
 /**
  * Backend activator - switches to backend provided in backendNum
  *
  * @return 0 on success, -ENOENT if backendNum is invalid.
  */
-int matBackendActivate(unsigned int backendNum);
+long matBackendActivate(unsigned int backendNum);
 
 /**
  * Backend cleaner - calls release() on all backends and frees backend array.
@@ -90,8 +90,8 @@ void matBackendCleanup(void);
 
 // Regular functions visible for the rest of the driver.
 // During backends init, driver checks which device is available and chooses appropriate one.
-int matSetOp(enum matOps op);
-int matSendMatrix(matdrv_matrix_t* mat);
-int matGetResultMatrix(matdrv_matrix_t* mat);
+long matSetOp(enum matOps op);
+long matSendMatrix(matdrv_matrix_t* mat);
+long matGetResultMatrix(matdrv_matrix_t* mat);
 
 #endif // _MATDRV_BACKEND_H_

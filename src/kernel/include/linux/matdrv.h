@@ -31,8 +31,8 @@ typedef struct matdrv_matrix
 
 #define MATDRV_IOCTL_MAGIC 0x98
 
-#define MATDRV_IOCTL_SET_OP        _IOW(MATDRV_IOCTL_MAGIC, 1, int)
-#define MATDRV_IOCTL_SEND_MATRIX   _IOW(MATDRV_IOCTL_MAGIC, 2, struct matdrv_matrix)
-#define MATDRV_IOCTL_GET_RESULT    _IOR(MATDRV_IOCTL_MAGIC, 3, struct matdrv_matrix)
+#define MATDRV_IOCTL_SET_OP        _IOW (MATDRV_IOCTL_MAGIC, 1, int)
+#define MATDRV_IOCTL_SEND_MATRIX   _IOW (MATDRV_IOCTL_MAGIC, 2, struct matdrv_matrix)
+#define MATDRV_IOCTL_GET_RESULT    _IOWR(MATDRV_IOCTL_MAGIC, 3, struct matdrv_matrix)
 
 #endif // _INCLUDE_LINUX_MATDRV_H_

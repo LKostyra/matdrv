@@ -5,7 +5,7 @@ struct matBackendFunc** gBackends = NULL;
 int activeBackend = -1;
 unsigned int backendSize = 0, backendCurrentSize = 0;
 
-int matBackendAdd(struct matBackendFunc* backend)
+long matBackendAdd(struct matBackendFunc* backend)
 {
     int ret;
 
@@ -61,7 +61,7 @@ int matBackendAdd(struct matBackendFunc* backend)
     return 0;
 }
 
-int matBackendActivate(unsigned int backendNum)
+long matBackendActivate(unsigned int backendNum)
 {
     if (backendNum > backendCurrentSize)
     {
@@ -92,19 +92,19 @@ void matBackendCleanup(void)
 }
 
 // from this point on it is assumed, that:
-//   * gAvailableBackend points to last added working backend
+//   * activeBackend points to last added working backend
 //   * "working backend" means that there is no function pointer in backend struct which is NULL
-int matSetOp(enum matOps op)
+long matSetOp(enum matOps op)
 {
     return gBackends[activeBackend]->setOp(op);
 }
 
-int matSendMatrix(matdrv_matrix_t* mat)
+long matSendMatrix(matdrv_matrix_t* mat)
 {
     return gBackends[activeBackend]->sendMatrix(mat);
 }
 
-int matGetResultMatrix(matdrv_matrix_t* mat)
+long matGetResultMatrix(matdrv_matrix_t* mat)
 {
     return gBackends[activeBackend]->getResultMatrix(mat);
 }

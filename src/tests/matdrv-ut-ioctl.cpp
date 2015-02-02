@@ -49,9 +49,9 @@ TEST_F(IoctlTest, SendMat)
     matdrv_matrix_t mat2;
     mat2.sizex = 2;
     mat2.sizey = 3;
-    mat2.matrix = new int[mat.sizex * mat.sizey];
+    mat2.matrix = new int[mat2.sizex * mat2.sizey];
 
-    for (int i=0; i<mat.sizex*mat.sizey; ++i)
+    for (int i=0; i<mat2.sizex*mat2.sizey; ++i)
         mat2.matrix[i] = (i + 43) * 2;
 
     // some random number should fail
