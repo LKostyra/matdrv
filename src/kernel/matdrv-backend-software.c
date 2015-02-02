@@ -107,8 +107,15 @@ long matSoftwareSendMatrix(matdrv_matrix_t* mat)
  *
  * @return 0 on success, -EINVAL if matrix sizes are incorrect.
  */
-inline long matSoftwareCalculateMatrixDim(void)
+long matSoftwareCalculateMatrixDim(void)
 {
+    if (selectedOp == MATOP_NONE)
+    {
+        // we must have knowledge about what matrix to create
+        LOGE("No operation selected! Please select operation with MATDRV_IOCTL_SET_OP");
+        return -EINVAL;
+    }
+
     if (selectedOp == MATOP_ADD || selectedOp == MATOP_SUBTRACT)
     {
         if (matrix[0].sizex != matrix[1].sizex)
@@ -138,10 +145,17 @@ inline long matSoftwareCalculateMatrixDim(void)
     }
     else if (selectedOp == MATOP_MULTIPLY)
     {
-        // as for multipliaction process, we cannot simply assume that we will replace empty
-        // elements with 0. Assume that result matrix must be correct size, return error if it isn't
+        // matrix multiplication condition: mat0 sizey == mat1 sizex
+        if (matrix[0].sizey != matrix[1].sizex)
+        {
+            LOGE("matrix0 X does not equal matrix1 Y size (%d vs %d)!",
+                 matrix[0].sizey, matrix[1].sizex);
+            return -EINVAL;
+        }
 
-        // TODO fill multiplication
+        // if above is met, result matrix has sizex equal mat0 sizex and sizey equal mat1 sizey
+        result.sizex = matrix[0].sizex;
+        result.sizey = matrix[1].sizey;
     }
 
     return 0;
@@ -150,13 +164,6 @@ inline long matSoftwareCalculateMatrixDim(void)
 long matSoftwareAdd(void)
 {
     unsigned int i;
-
-    result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
-    if (!result.matrix)
-    {
-        LOGE("Failed to allocate memory for result matrix!");
-        return -ENOMEM;
-    }
 
     for (i=0; i<result.sizex*result.sizey; ++i)
     {
@@ -172,13 +179,6 @@ long matSoftwareSubtract(void)
 {
     unsigned int i;
 
-    result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
-    if (!result.matrix)
-    {
-        LOGE("Failed to allocate memory for result matrix!");
-        return -ENOMEM;
-    }
-
     for (i=0; i<result.sizex*result.sizey; ++i)
     {
         // calculation
@@ -191,6 +191,25 @@ long matSoftwareSubtract(void)
 
 long matSoftwareMultiply(void)
 {
+    unsigned int i, j, k; // loop iterators
+
+    // NOTE This might be optimized by using some sophisticated divide-and-conquer algorithm
+    //      Right now, this is calculated by using the straightforward old-fashioned way.
+    for (i=0; i<result.sizey; ++i)
+    {
+        for (j=0; j<result.sizex; ++j)
+        {
+            result.matrix[(i*result.sizex)+j] = 0;
+            for (k=0; k<matrix[0].sizey; ++k)
+            {
+                result.matrix[(i*result.sizex)+j] +=
+                        matrix[0].matrix[i*matrix[0].sizex + k] *
+                        matrix[1].matrix[k*matrix[1].sizex + j];
+            }
+        }
+    }
+
+    // result matrix calculated successfully, return to GetResultMatrix
     return 0;
 }
 
@@ -215,6 +234,15 @@ long matSoftwareGetResultMatrix(matdrv_matrix_t* mat)
         return -EINVAL;
     }
 
+    // allocate space
+    result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
+    if (!result.matrix)
+    {
+        LOGE("Failed to allocate memory for result matrix!");
+        return -ENOMEM;
+    }
+
+    // do the math
     switch (selectedOp)
     {
     case MATOP_NONE: // just exit, there is not much we can do
