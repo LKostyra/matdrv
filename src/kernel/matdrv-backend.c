@@ -36,6 +36,17 @@ int matBackendAdd(struct matBackendFunc* backend)
     // assign backend
     gBackends[backendCurrentSize] = backend;
 
+    // verify that all functions are defined
+    if (gBackends[backendCurrentSize]->init == NULL ||
+        gBackends[backendCurrentSize]->release == NULL ||
+        gBackends[backendCurrentSize]->setOp == NULL ||
+        gBackends[backendCurrentSize]->sendMatrix == NULL ||
+        gBackends[backendCurrentSize]->getResultMatrix == NULL)
+    {
+        LOGE("Incomplete backend provided!");
+        return -ENOENT;
+    }
+
     // initialize backend
     ret = gBackends[backendCurrentSize]->init();
     if (ret != 0)
