@@ -11,8 +11,10 @@
 
 #define LOG(kern_level, level, format, ...)                             \
     do {                                                                \
-        printk(kern_level "MatDrv [" #level "] %s@%d: " format "\n",    \
-               __func__, __LINE__, ##__VA_ARGS__);                      \
+        char fmthead[512];                                              \
+        snprintf(fmthead, 512, kern_level "MatDrv [" #level "] %s@%d: ",\
+                 __func__, __LINE__);                                   \
+        printk("%-50s" format "\n", fmthead, ##__VA_ARGS__);            \
     } while(0)
 
 #ifdef DEBUG
