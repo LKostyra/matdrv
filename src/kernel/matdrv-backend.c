@@ -1,28 +1,82 @@
 #include "matdrv-backend.h"
+#include "matdrv-log.h"
 
-struct matBackendFunc* gBackends = NULL;
-int* gBackendInitResults = NULL;
+struct matBackendFunc** gBackends = NULL;
 int activeBackend = -1;
+unsigned int backendSize = 0, backendCurrentSize = 0;
 
-int matBackendAdd(struct matBackendFunc backend)
+int matBackendAdd(struct matBackendFunc* backend)
 {
-    // TODO fill
-    backend;
+    int ret;
+
+    // a small optimization to avoid often allocations during initialization
+    // preallocate 4 spaces for backends
+    if (backendCurrentSize == backendSize)
+    {
+        // pre-allocate gBackends and gBackendInitResults
+        backendSize += 4;
+
+        if (!gBackends)
+        {
+            gBackends = (struct matBackendFunc**)kmalloc(sizeof(struct matBackendFunc) * backendSize,
+                        GFP_KERNEL);
+        }
+        else
+        {
+            gBackends = (struct matBackendFunc**)krealloc(gBackends,
+                        sizeof(struct matBackendFunc) * backendSize,
+                        GFP_KERNEL);
+        }
+        if (!gBackends)
+        {
+            return -ENOMEM;
+        }
+    }
+
+    // assign backend
+    gBackends[backendCurrentSize] = backend;
+
+    // initialize backend
+    ret = gBackends[backendCurrentSize]->init();
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    LOGI("Added backend with ID = %u", backendCurrentSize);
+    backendCurrentSize++;
 
     return 0;
 }
 
 int matBackendActivate(unsigned int backendNum)
 {
-   // TODO fill
-    backendNum;
+    if (backendNum > backendCurrentSize)
+    {
+        return -ENOENT;
+    }
+
+    activeBackend = backendNum;
 
     return 0;
 }
 
 void matBackendCleanup(void)
 {
-    // TODO fill
+    // call release() functions
+    unsigned int i;
+    for (i=0; i<backendCurrentSize; ++i)
+    {
+        gBackends[i]->release();
+    }
+
+    if (gBackends)
+    {
+        kfree(gBackends);
+        gBackends = NULL;
+    }
+
+    activeBackend = -1;
 }
 
 // from this point on it is assumed, that:
@@ -30,15 +84,15 @@ void matBackendCleanup(void)
 //   * "working backend" means that there is no function pointer in backend struct which is NULL
 void matCommSetOp(enum matOps op)
 {
-    gBackends[activeBackend].setOp(op);
+    gBackends[activeBackend]->setOp(op);
 }
 
 void matCommSendMatrix(int* mat)
 {
-    gBackends[activeBackend].sendMatrix(mat);
+    gBackends[activeBackend]->sendMatrix(mat);
 }
 
 void matCommGetResultMatrix(int* mat)
 {
-    gBackends[activeBackend].getResultMatrix(mat);
+    gBackends[activeBackend]->getResultMatrix(mat);
 }

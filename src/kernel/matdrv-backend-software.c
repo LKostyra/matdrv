@@ -1,5 +1,6 @@
 #include "matdrv-backend-software.h"
 #include "matdrv-common.h"
+#include "matdrv-log.h"
 
 // prototypes
 int matSoftwareInit(void);
@@ -22,7 +23,7 @@ struct matBackendFunc matSoftwareBackend =
 // should be caled by init function of this module
 int matSoftwareAddBackend(void)
 {
-    return matBackendAdd(matSoftwareBackend);
+    return matBackendAdd(&matSoftwareBackend);
 }
 
 ////////////////////////////

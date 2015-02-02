@@ -9,10 +9,15 @@
 
 #include "matdrv-common.h"
 
+
+/////////////////
+// BACKEND API //
+/////////////////
+
 /**
  * A set of functions for each backend, used to communicate with the device
  *
- * Each device type must specify these, except for init and release.
+ * Each device type must specify these.
  */
 struct matBackendFunc
 {
@@ -54,8 +59,7 @@ void (*sendMatrix)(int* mat);
     void (*getResultMatrix)(int* mat);
 };
 
-extern struct matBackendFunc* gBackends;
-extern int* gBackendInitResults;
+extern struct matBackendFunc** gBackends;
 
 /**
  * Backend initializer - captures defined backend and adds it to the list.
@@ -65,12 +69,24 @@ extern int* gBackendInitResults;
  *
  * @return 0 on success, -ENODEV if backend cannot be initialized.
  */
-int matBackendAdd(struct matBackendFunc backend);
+int matBackendAdd(struct matBackendFunc* backend);
+
+/**
+ * Backend activator - switches to backend provided in backendNum
+ *
+ * @return 0 on success, -ENOENT if backendNum is invalid.
+ */
+int matBackendActivate(unsigned int backendNum);
 
 /**
  * Backend cleaner - calls release() on all backends and frees backend array.
  */
 void matBackendCleanup(void);
+
+
+///////////////////////////////
+// BACKEND GENERAL FUNCTIONS //
+///////////////////////////////
 
 // Regular functions visible for the rest of the driver.
 // During backends init, driver checks which device is available and chooses appropriate one.
