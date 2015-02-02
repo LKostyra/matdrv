@@ -10,6 +10,8 @@
 #include "matdrv-backend.h"
 #include "matdrv-backend-software.h"
 
+#include <linux/mutex.h>
+
 static int matInit(void)
 {
     int ret = 0;
@@ -31,6 +33,8 @@ static int matInit(void)
         LOGE("Failed to craete dev node. Error: %d", ret);
         goto out;
     }
+
+    mutex_init(&devLockMutex);
 
     LOGI("Initialized successfully.");
 

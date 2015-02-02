@@ -10,6 +10,7 @@
 
 #include <linux/types.h>
 #include <linux/fs.h>
+#include <linux/mutex.h>
 
 #define MATDRV_DEV_CLASS_NAME "matdrv_class"
 #define MATDRV_DEV_MINOR_COUNT 1
@@ -18,6 +19,7 @@ struct cdev* gMatDevCdev = NULL;
 
 dev_t matDev = 0;
 static struct class* matDevClass = NULL;
+struct mutex devLockMutex;
 
 ssize_t matDevWrite(struct file* filp, const char __user *buf, size_t count, loff_t* off)
 {
@@ -31,13 +33,25 @@ ssize_t matDevRead(struct file* filp, char __user *buf, size_t count, loff_t* of
 
 static int matDevOpen(struct inode* inode, struct file* file)
 {
+    int ret;
     LOGI("Opening device.");
+
+    ret = mutex_lock_interruptible(&devLockMutex);
+    if (ret)
+    {
+        LOGE("Failed to lock mutex!");
+        return ret;
+    }
+    LOGD("Mutex lock acquired");
     return 0;
 }
 
 static int matDevRelease(struct inode* inode, struct file* file)
 {
     LOGI("Releasing device.");
+
+    mutex_unlock(&devLockMutex);
+    LOGD("Mutex unlocked");
     return 0;
 }
 

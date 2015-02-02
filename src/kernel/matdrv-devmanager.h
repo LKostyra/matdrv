@@ -13,6 +13,7 @@
 
 #define MATDRV_DEV_NAME "matdrv"
 extern struct cdev* gMatDevCdev;
+extern struct mutex devLockMutex; // visible in order to initialize in matInit
 
 int matDevCreate(void);
 void matDevCleanup(void);
