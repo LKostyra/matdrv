@@ -1,4 +1,4 @@
-MatDrv Project v 0.0.0
+MatDrv Project v 0.0.1
 ======================
 
 Driver for delegating matrix calculations to external devices.

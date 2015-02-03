@@ -9,7 +9,7 @@
 
 #define __MATDRV_VER_MAJOR       0
 #define __MATDRV_VER_MINOR       0
-#define __MATDRV_VER_MAINTENANCE 0
+#define __MATDRV_VER_MAINTENANCE 1
 
 #define __str(s) #s
 #define __MATDRV_VER(maj, min, maint) __str(maj) "." __str(min) "." __str(maint)
