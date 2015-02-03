@@ -227,6 +227,11 @@ long matSoftwareGetResultMatrix(matdrv_matrix_t* mat)
     // check if user provided correct matrix with enough space
     // we must assume, that sizex*sizey is indeed size of users matrix
     // other situations are probably bad programming from user's side
+    if (!mat->matrix)
+    {
+        LOGE("User did not allocare space for the result!");
+        return -EINVAL;
+    }
     LOGI("Received result matrix %dx%d", mat->sizex, mat->sizey);
     if (mat->sizex != result.sizex || mat->sizey != result.sizey)
     {
@@ -235,6 +240,9 @@ long matSoftwareGetResultMatrix(matdrv_matrix_t* mat)
     }
 
     // allocate space
+    if (result.matrix)
+        kfree(result.matrix);
+
     result.matrix = (int*)kmalloc(sizeof(int)*result.sizex*result.sizey, GFP_KERNEL);
     if (!result.matrix)
     {
